@@ -4,6 +4,8 @@ services:
   redis:
     image: 'redis:alpine'
     container_name: redis
+    networks:
+      - network-notification
     ports:
       - '${REDIS_PORT}:6379'
 
@@ -11,32 +13,45 @@ services:
   zookeeper:
     image: 'confluentinc/cp-zookeeper:latest'
     container_name: zookeeper
+    networks:
+      - network-notification
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - '2181:2181'
+      - 2181:2181
+    extra_hosts:
+      - 'localhost: 127.0.0.1'
 
   # Kafka брокер
   kafka:
+    restart: always
     image: 'confluentinc/cp-kafka:latest'
     container_name: kafka
+    networks:
+      - network-notification
     depends_on:
       - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_LISTENERS: INTERNAL://:9092,localhost://:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,localhost://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,localhost:PLAINTEXT
     ports:
       - '9092:9092'
-
+      - '9094:9094'
   # Nest.js приложение
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: notification-app
+    networks:
+      - network-notification
+    volumes:
+      - ./:/var/www/notification
     ports:
       - ${APP_PORT}:${APP_PORT}
     depends_on:
@@ -48,5 +63,5 @@ services:
       - KAFKA_BROKER=kafka:9092
 
 networks:
-  default:
-    name: notification-network
+  network-notification:
+    external: true

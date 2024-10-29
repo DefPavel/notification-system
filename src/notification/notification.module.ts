@@ -1,20 +1,33 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+
+import { KAFKA_SERVICE } from '../common/constant';
 
 import { NotificationController } from './notification.controller';
+import { NotificationService } from './notification.service';
 
-import { EMAIL_QUEUE } from '@/common/constant';
 import { EmailModule } from '@/email/email.module';
-import { EmailQueueProcessor } from '@/email/email-queue.processor';
 
 @Module({
   imports: [
-    BullModule.registerQueue({
-      name: EMAIL_QUEUE,
-    }),
+    ClientsModule.register([
+      {
+        name: KAFKA_SERVICE,
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            brokers: ['kafka:9092'],
+          },
+          consumer: {
+            groupId: 'email-consumer',
+          },
+        },
+      },
+    ]),
     EmailModule,
   ],
   controllers: [NotificationController],
-  providers: [EmailQueueProcessor],
+  providers: [NotificationService],
+  exports: [ClientsModule],
 })
 export class NotificationModule {}

@@ -1,7 +1,7 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 
-import { EmailService } from '../email/email.service';
+import { EmailService } from '@/email/email.service';
 import { EMAIL_QUEUE } from '@/common/constant';
 
 /**
