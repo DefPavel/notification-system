@@ -5,7 +5,7 @@ services:
     image: 'redis:alpine'
     container_name: redis
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT}:6379'
 
   # Zookeeper для управления Kafka-брокерами
   zookeeper:
@@ -38,15 +38,15 @@ services:
       dockerfile: Dockerfile
     container_name: notification-app
     ports:
-      - '3000:3000'
+      - ${APP_PORT}:${APP_PORT}
     depends_on:
       - redis
       - kafka
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
       - KAFKA_BROKER=kafka:9092
 
 networks:
   default:
-    name: my_network
+    name: notification-network

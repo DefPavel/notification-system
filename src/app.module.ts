@@ -4,6 +4,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 
 import { NotificationModule } from './notification/notification.module';
 import { ConfigModule } from '@nestjs/config';
+import { KAFKA_SERVICE } from './common/constant';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { ConfigModule } from '@nestjs/config';
     }),
     ClientsModule.register([
       {
-        name: 'KAFKA_SERVICE',
+        name: KAFKA_SERVICE,
         transport: Transport.KAFKA,
         options: {
           client: {

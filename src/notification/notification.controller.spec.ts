@@ -1,9 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotificationController } from './notification.controller';
 import { BullModule, getQueueToken } from '@nestjs/bull';
 import { INestApplication } from '@nestjs/common';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import request = require('supertest');
 import { Queue } from 'bull';
+
+import { NotificationController } from './notification.controller';
+
+import { EMAIL_QUEUE, KAFKA_SERVICE } from '@/common/constant';
 
 describe('NotificationController (e2e)', () => {
   let app: INestApplication;
@@ -13,19 +17,19 @@ describe('NotificationController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         BullModule.registerQueue({
-          name: 'emailQueue',
+          name: EMAIL_QUEUE,
         }),
       ],
       controllers: [NotificationController],
       providers: [
         {
-          provide: 'KAFKA_SERVICE',
+          provide: KAFKA_SERVICE,
           useValue: {
             emit: jest.fn(),
           },
         },
         {
-          provide: getQueueToken('emailQueue'),
+          provide: getQueueToken(EMAIL_QUEUE),
           useValue: {
             add: jest.fn().mockResolvedValue(true),
           },
@@ -36,7 +40,7 @@ describe('NotificationController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    emailQueue = moduleFixture.get<Queue>(getQueueToken('emailQueue'));
+    emailQueue = moduleFixture.get<Queue>(getQueueToken(EMAIL_QUEUE));
   });
 
   afterAll(async () => {
